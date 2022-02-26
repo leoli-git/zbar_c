@@ -155,7 +155,7 @@ __inline void zbar_image_free_data (zbar_image_t *img)
         newimg = zbar_image_create();
         memcpy(newimg, img, sizeof(zbar_image_t));
         /* recycle video image */
-        newimg->cleanup(newimg);
+        // newimg->cleanup(newimg);
         /* detach old image from src */
         img->cleanup = NULL;
         img->src = NULL;
