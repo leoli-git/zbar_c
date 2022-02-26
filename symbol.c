@@ -261,7 +261,7 @@ enum {
 
 #define TMPL_FMT(t, ...) do {                                 \
         static const char *_st = (t);                         \
-        i = _snprintf(*buf + n, maxlen - n, _st, __VA_ARGS__); \
+        i = snprintf(*buf + n, maxlen - n, _st, __VA_ARGS__); \
         assert(i > 0);                                        \
         n += i;                                               \
         assert(n <= maxlen);                                  \

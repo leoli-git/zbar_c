@@ -248,10 +248,10 @@ int zbar_image_write (const zbar_image_t *img,
     zimg_hdr_t hdr;
     strcpy(filename, filebase);
     if((img->format & 0xff) >= ' ')
-        n = _snprintf(filename, len, "%s.%.4s.zimg",
+        n = snprintf(filename, len, "%s.%.4s.zimg",
                      filebase, (char*)&img->format);
     else
-		n = _snprintf(filename, len, "%s.%08lx.zimg",
+		n = snprintf(filename, len, "%s.%08lx.zimg",
                      filebase, img->format);
     assert(n < len - 1);
     filename[len - 1] = '\0';
