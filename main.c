@@ -6,6 +6,11 @@
 #include "zbar.h"
 #include "image.h"
 
+#define SelfTest
+#ifdef SelfTest
+#define SampleQR "/QRSample.bmp"
+#endif
+
 #define BITMAP
 #ifdef BITMAP
 // 檔案結構
@@ -203,6 +208,14 @@ void BitmapWrite(const bitmap_t *_this, const char *name)
 }
 #endif
 
+char *GetModuleFolder(void)
+{
+    char *filePath = malloc(sizeof(char) * (MAX_PATH + 1));
+    GetModuleFileNameA(NULL, filePath, MAX_PATH);
+    (strrchr(filePath, '\\'))[0] = 0;
+    return filePath;
+}
+
 void DeleteChar(char *str, char ch)
 {
     char *p = str;
@@ -218,13 +231,25 @@ void DeleteChar(char *str, char ch)
     *p = '\0';
 }
 
+void cleanup (zbar_image_t *img)
+{
+	(void)img;
+    // printf("cleanup\r\n");
+    // free(img);
+}
+
 int main()
 {
 #ifdef BITMAP
-    char *fileName = malloc(128 * sizeof(char));
+    char *fileName = malloc(MAX_PATH * sizeof(char));
+#if defined(SelfTest)
+    fileName = GetModuleFolder();
+    fileName = strcat(fileName, SampleQR);
+#else
     printf("Please Input QR Code Bmp File Path: ");
     scanf("%s", fileName);
     DeleteChar(fileName, '\"');
+#endif
     bitmap_t bitmap = {0, 0, 0, NULL};
     BitmapRead(&bitmap, fileName);
     printf("BmpSize: %dx%d\r\n", bitmap.width, bitmap.height);
@@ -242,6 +267,18 @@ int main()
     int width = bitmap.width;
     int height = bitmap.height;
     const unsigned char *raw = bitmap.data;
+
+    // FILE *fp = NULL;
+    // fp = fopen("D:/00_WorkUse/test.txt", "w+");
+    // for (size_t i = 0; i < bitmap.height; i++)
+    // {
+    //     for (size_t j = 0; j < bitmap.width; j++)
+    //     {
+    //         fprintf(fp, "0x%x, ", raw[i * bitmap.width + j]);
+    //     }
+    //     fprintf(fp, "\r\n");
+    // }
+    // fclose(fp);
 #else
     int width = 216;
     int height = 216;
@@ -251,7 +288,7 @@ int main()
     zbar_image_set_size(image, width, height);
     unsigned long format = zbar_fourcc_parse("Y800");
     zbar_image_set_format(image, format);
-    zbar_image_set_data(image, (unsigned char *)raw, width * height, NULL);
+    zbar_image_set_data(image, (unsigned char *)raw, width * height, cleanup);
 
     ret = zbar_scan_image(scanner, image);
 
@@ -264,13 +301,14 @@ int main()
     else
         printf("an error occurs\r\n");
 
+    const char *data = NULL;
     if (ret > 0)
     {
         const zbar_symbol_t *symbol = zbar_image_first_symbol(image);
         for (; symbol; symbol = zbar_symbol_next(symbol))
         {
             zbar_symbol_type_t type = zbar_symbol_get_type(symbol);
-            const char *data = zbar_symbol_get_data(symbol);
+            data = zbar_symbol_get_data(symbol);
             printf("decoded: %s\r\n", data);
         }
     }
@@ -280,6 +318,13 @@ int main()
 
     printf("time spent: %d ms\r\n", t2 - t1);
     printf("press ENTER to EXIT\r\n");
+
+#if defined(SelfTest)
+    if (ret > 0 && strcmp(data, "134583789727716556"))
+        printf("SelfTest: PASS\r\n");
+    else
+        printf("SelfTest: ERROR\r\n");
+#endif
 
     fflush(stdin);   // 清除輸入緩衝區
     (void)getchar(); // wait for exit
