@@ -7,11 +7,15 @@
 #include "image.h"
 
 #define SelfTest
+#define BITMAP
+#ifdef BITMAP
+#define DUMP_FILE
+#endif
+
 #ifdef SelfTest
 #define SampleQR "/QRSample.bmp"
 #endif
 
-#define BITMAP
 #ifdef BITMAP
 // 檔案結構
 #pragma pack(2)
@@ -231,9 +235,9 @@ void DeleteChar(char *str, char ch)
     *p = '\0';
 }
 
-void cleanup (zbar_image_t *img)
+void cleanup(zbar_image_t *img)
 {
-	(void)img;
+    (void)img;
     // printf("cleanup\r\n");
     // free(img);
 }
@@ -250,6 +254,7 @@ int main()
     scanf("%s", fileName);
     DeleteChar(fileName, '\"');
 #endif
+    printf("FileName: %s\r\n", fileName);
     bitmap_t bitmap = {0, 0, 0, NULL};
     BitmapRead(&bitmap, fileName);
     printf("BmpSize: %dx%d\r\n", bitmap.width, bitmap.height);
@@ -261,28 +266,34 @@ int main()
     int ret;
     zbar_image_scanner_t *scanner = zbar_image_scanner_create();
     ret = zbar_image_scanner_set_config(scanner, ZBAR_NONE, ZBAR_CFG_ENABLE, 0);
+    // printf("ret: %d\r\n", ret);
     ret = zbar_image_scanner_set_config(scanner, ZBAR_QRCODE, ZBAR_CFG_ENABLE, 1);
+    // printf("ret: %d\r\n", ret);
 
 #ifdef BITMAP
     int width = bitmap.width;
     int height = bitmap.height;
     const unsigned char *raw = bitmap.data;
-
-    // FILE *fp = NULL;
-    // fp = fopen("D:/00_WorkUse/test.txt", "w+");
-    // for (size_t i = 0; i < bitmap.height; i++)
-    // {
-    //     for (size_t j = 0; j < bitmap.width; j++)
-    //     {
-    //         fprintf(fp, "0x%x, ", raw[i * bitmap.width + j]);
-    //     }
-    //     fprintf(fp, "\r\n");
-    // }
-    // fclose(fp);
+#ifdef DUMP_FILE
+    FILE *fp = NULL;
+    fileName = GetModuleFolder();
+    fileName = strcat(fileName, "/dump.txt");
+    fp = fopen(fileName, "w+");
+    const int LINE_LEN = 24;
+    for (size_t i = 0; i < (bitmap.height * bitmap.width) / LINE_LEN; i++)
+    {
+        for (size_t j = 0; j < LINE_LEN; j++)
+        {
+            fprintf(fp, "0x%x, ", raw[i * LINE_LEN + j]);
+        }
+        fprintf(fp, "// mark\r\n");
+    }
+    fclose(fp);
+#endif
 #else
     int width = 216;
     int height = 216;
-    const void *raw = malloc(width * height);
+    const unsigned char *raw = (unsigned char *)malloc(width * height);
 #endif
     zbar_image_t *image = zbar_image_create();
     zbar_image_set_size(image, width, height);
