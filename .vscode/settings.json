@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.cfg": "cpp",
+        "zbar.h": "c",
+        "decoder.h": "c",
+        "debug.h": "c",
+        "config.h": "c",
+        "string.h": "c",
+        "stringapiset.h": "c",
+        "*.def": "c",
+        "iconv_open1.h": "c",
+        "converters.h": "c",
+        "aliases.h": "c"
+    }
+}

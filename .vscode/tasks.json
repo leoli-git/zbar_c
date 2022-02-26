@@ -1,0 +1,31 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc.exe 建置使用中檔案",
+			"command": "C:/mingw64/bin/gcc.exe",
+			"args": [
+				"-fdiagnostics-color=always",
+				"-g",
+				// "D:\\00_WorkUse\\ZBarWinC\\libiconv\\dll_win32\\libiconv.dll",
+				// "D:\\00_WorkUse\\ZBarWinC\\libiconv\\lib_win32\\libiconv.lib",
+				// "${fileDirname}\\iconv\\*.c",
+				"${fileDirname}\\decoder\\*.c",
+				"${fileDirname}\\qrcode\\*.c",
+				"${fileDirname}\\*.c",
+				"-o",
+				// "${fileDirname}\\${fileBasenameNoExtension}.exe"
+				"${fileDirname}\\ZBarQRDecoder.exe"
+			],
+			"options": {
+				"cwd": "C:/mingw64/bin"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "編譯器: C:/mingw64/bin/gcc.exe"
+		}
+	]
+}
