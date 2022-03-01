@@ -299,7 +299,7 @@ int main()
     zbar_image_set_size(image, width, height);
     unsigned long format = zbar_fourcc_parse("Y800");
     zbar_image_set_format(image, format);
-    zbar_image_set_data(image, (unsigned char *)raw, width * height, cleanup);
+    zbar_image_set_data(image, (unsigned char *)raw, width * height, NULL);
 
     ret = zbar_scan_image(scanner, image);
 
@@ -313,6 +313,7 @@ int main()
         printf("an error occurs\r\n");
 
     const char *data = NULL;
+    unsigned int dataLen = 0;
     if (ret > 0)
     {
         const zbar_symbol_t *symbol = zbar_image_first_symbol(image);
@@ -320,7 +321,8 @@ int main()
         {
             zbar_symbol_type_t type = zbar_symbol_get_type(symbol);
             data = zbar_symbol_get_data(symbol);
-            printf("decoded: %s\r\n", data);
+            dataLen = zbar_symbol_get_data_length(symbol);
+            printf("decoded: %s, data length: %d\r\n", data, dataLen);
         }
     }
 
@@ -331,10 +333,25 @@ int main()
     printf("press ENTER to EXIT\r\n");
 
 #if defined(SelfTest)
-    if (ret > 0 && strcmp(data, "134583789727716556"))
-        printf("SelfTest: PASS\r\n");
+    if (ret > 0 /* && strcmp(data, "134583789727716556") */)
+    {
+        printf("SelfTest: \r\n");
+        printf("-- decoded PASS\r\n");
+        char *str1 = "134583789727716556";
+        for (size_t iii = 0; iii < min(dataLen - 1, 18); iii++)
+        {
+            if (data[iii] == str1[iii])
+                ret = 1;
+            else
+                ret = 0;
+        }
+        if (ret == 1)
+            printf("-- str verify PASS\r\n");
+        else
+            printf("-- str verify FAIL\r\n");
+    }
     else
-        printf("SelfTest: ERROR\r\n");
+        printf("SelfTest: FAIL\r\n");
 #endif
 
     fflush(stdin);   // 清除輸入緩衝區
