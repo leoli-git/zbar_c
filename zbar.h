@@ -73,6 +73,7 @@ namespace zbar {
 #endif
 
 #include <stdint.h>
+#include "alloc.h"
 
 /** @name Global library interfaces */
 /*@{*/

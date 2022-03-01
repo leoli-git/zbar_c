@@ -119,10 +119,10 @@ void _zbar_symbol_free (zbar_symbol_t *sym)
         sym->syms = NULL;
     }
     if(sym->pts)
-        free(sym->pts);
+        zbar_free(sym->pts);
     if(sym->data_alloc && sym->data)
-        free(sym->data);
-    free(sym);
+        zbar_free(sym->data);
+    zbar_free(sym);
 }
 
 void zbar_symbol_ref (const zbar_symbol_t *sym,
@@ -309,8 +309,8 @@ char *zbar_symbol_xml (const zbar_symbol_t *sym,
 
     if(!*buf || (*len < maxlen)) {
         if(*buf)
-            free(*buf);
-        *buf = malloc(maxlen);
+            zbar_free(*buf);
+        *buf = zbar_malloc(maxlen);
         /* FIXME check OOM */
         *len = maxlen;
     }
@@ -367,7 +367,7 @@ char *zbar_symbol_xml (const zbar_symbol_t *sym,
 
 zbar_symbol_set_t *_zbar_symbol_set_create ()
 {
-    zbar_symbol_set_t *syms = calloc(1, sizeof(*syms));
+    zbar_symbol_set_t *syms = zbar_calloc(1, sizeof(*syms));
     _zbar_refcnt(&syms->refcnt, 1);
     return(syms);
 }
@@ -381,7 +381,7 @@ __inline void _zbar_symbol_set_free (zbar_symbol_set_t *syms)
         _zbar_symbol_refcnt(sym, -1);
     }
     syms->head = NULL;
-    free(syms);
+    zbar_free(syms);
 }
 
 void zbar_symbol_set_ref (const zbar_symbol_set_t *syms,

@@ -39,9 +39,9 @@
 
 zbar_decoder_t *zbar_decoder_create ()
 {
-    zbar_decoder_t *dcode = calloc(1, sizeof(zbar_decoder_t));
+    zbar_decoder_t *dcode = zbar_calloc(1, sizeof(zbar_decoder_t));
     dcode->buf_alloc = BUFFER_MIN;
-    dcode->buf = malloc(dcode->buf_alloc);
+    dcode->buf = zbar_malloc(dcode->buf_alloc);
 
     /* initialize default configs */
 #ifdef ENABLE_EAN
@@ -69,7 +69,7 @@ zbar_decoder_t *zbar_decoder_create ()
     dcode->databar.config_exp = ((1 << ZBAR_CFG_ENABLE) |
                                  (1 << ZBAR_CFG_EMIT_CHECK));
     dcode->databar.csegs = 4;
-    dcode->databar.segs = calloc(4, sizeof(*dcode->databar.segs));
+    dcode->databar.segs = zbar_calloc(4, sizeof(*dcode->databar.segs));
 #endif
 #ifdef ENABLE_CODABAR
     dcode->codabar.config = 1 << ZBAR_CFG_ENABLE;
@@ -100,11 +100,11 @@ void zbar_decoder_destroy (zbar_decoder_t *dcode)
 {
 #ifdef ENABLE_DATABAR
     if(dcode->databar.segs)
-        free(dcode->databar.segs);
+        zbar_free(dcode->databar.segs);
 #endif
     if(dcode->buf)
-        free(dcode->buf);
-    free(dcode);
+        zbar_free(dcode->buf);
+    zbar_free(dcode);
 }
 
 void zbar_decoder_reset (zbar_decoder_t *dcode)
@@ -518,8 +518,8 @@ const char *_zbar_decoder_buf_dump (unsigned char *buf,
 
     if(!decoder_dump || dumplen > decoder_dumplen) {
         if(decoder_dump)
-            free(decoder_dump);
-        decoder_dump = malloc(dumplen);
+            zbar_free(decoder_dump);
+        decoder_dump = zbar_malloc(dumplen);
         decoder_dumplen = dumplen;
     }
     p = decoder_dump +

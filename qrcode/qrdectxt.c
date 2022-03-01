@@ -6,6 +6,9 @@
 
 // #define ICONV_LIB
 #define ICONV_LITE_01
+#ifdef ICONV_LITE_01
+#define HAVE_UNICODE_2_GB18030_TABLE
+#endif
 
 #include "..\config.h"
 #include <stdio.h>
@@ -73,7 +76,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
   int i;
   qrdata = _qrlist->qrdata;
   nqrdata = _qrlist->nqrdata;
-  mark = (unsigned char *)calloc(nqrdata, sizeof(*mark));
+  mark = (unsigned char *)zbar_calloc(nqrdata, sizeof(*mark));
   ntext = 0;
   /*This is the encoding the standard says is the default.*/
   latin1_cd = iconv_open("UTF-8", "ISO8859-1");
@@ -185,7 +188,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
         }
 
       /*Step 2: Convert the entries.*/
-      sa_text = (char *)malloc((sa_ctext + 1) * sizeof(*sa_text));
+      sa_text = (char *)zbar_malloc((sa_ctext + 1) * sizeof(*sa_text));
       sa_ntext = 0;
       /*Add the encoded Application Indicator for FNC1 in the second position.*/
       if (fnc1 == MOD(ZBAR_MOD_AIM))
@@ -462,7 +465,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
         sa_text[sa_ntext++] = '\0';
         if (sa_ctext + 1 > sa_ntext)
         {
-          sa_text = (char *)realloc(sa_text, sa_ntext * sizeof(*sa_text));
+          sa_text = (char *)zbar_realloc(sa_text, sa_ntext * sizeof(*sa_text));
         }
 
         if (sa_size == 1)
@@ -522,7 +525,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
       else
       {
         _zbar_image_scanner_recycle_syms(iscn, syms);
-        free(sa_text);
+        zbar_free(sa_text);
       }
     }
   if (utf8_cd != (iconv_t)-1)
@@ -531,12 +534,13 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
     iconv_close(sjis_cd);
   if (latin1_cd != (iconv_t)-1)
     iconv_close(latin1_cd);
-  free(mark);
+  zbar_free(mark);
   return ntext;
 }
 #elif defined(ICONV_LITE_01)
 typedef void *iconv_lite_01_t;
 
+#ifdef HAVE_UNICODE_2_GB18030_TABLE
 const char unicode_to_gb18030_table[] = {
     0xD2, 0xBB, 0xB6, 0xA1, 0x81, 0x40, 0xC6, 0xDF, 0x81, 0x41, 0x81, 0x42, 0x81, 0x43, 0xCD, 0xF2, 0xD5, 0xC9, 0xC8, 0xFD, 0xC9, 0xCF, 0xCF, 0xC2, 0xD8, 0xA2, 0xB2, 0xBB, 0xD3, 0xEB, 0x81, 0x44,
     0xD8, 0xA4, 0xB3, 0xF3, 0x81, 0x45, 0xD7, 0xA8, 0xC7, 0xD2, 0xD8, 0xA7, 0xCA, 0xC0, 0x81, 0x46, 0xC7, 0xF0, 0xB1, 0xFB, 0xD2, 0xB5, 0xB4, 0xD4, 0xB6, 0xAB, 0xCB, 0xBF, 0xD8, 0xA9, 0x81, 0x47,
@@ -1845,7 +1849,7 @@ const char unicode_to_gb18030_table[] = {
     0xF6, 0xB3, 0xFD, 0x86, 0xFD, 0x87, 0xF6, 0xB4, 0xC1, 0xE4, 0xF6, 0xB5, 0xF6, 0xB6, 0xF6, 0xB7, 0xF6, 0xB8, 0xF6, 0xB9, 0xF6, 0xBA, 0xC8, 0xA3, 0xF6, 0xBB, 0xFD, 0x88, 0xFD, 0x89, 0xFD, 0x8A,
     0xFD, 0x8B, 0xFD, 0x8C, 0xFD, 0x8D, 0xFD, 0x8E, 0xFD, 0x8F, 0xFD, 0x90, 0xFD, 0x91, 0xFD, 0x92, 0xFD, 0x93, 0xC1, 0xFA, 0xB9, 0xA8, 0xED, 0xE8, 0xFD, 0x94, 0xFD, 0x95, 0xFD, 0x96, 0xB9, 0xEA,
     0xD9, 0xDF, 0xFD, 0x97, 0xFD, 0x98, 0xFD, 0x99, 0xFD, 0x9A, 0xFD, 0x9B};
-
+#endif
 /*
    |  Unicode rang         |  UTF-8 encode
  n |  (hex)                |  (bin)
@@ -1860,6 +1864,7 @@ const char unicode_to_gb18030_table[] = {
 */
 int iconv_lite_01_utf8_to_gb18030(uint8_t *utf8_code, uint32_t utf8_len, uint8_t *gb18030)
 {
+#ifdef HAVE_UNICODE_2_GB18030_TABLE
   uint8_t utf8_bytes[3];
   uint32_t i = 0, j = 0, k = 0;
   uint16_t unicode_value;
@@ -1897,6 +1902,9 @@ int iconv_lite_01_utf8_to_gb18030(uint8_t *utf8_code, uint32_t utf8_len, uint8_t
     }
   }
   return j;
+#else
+  return 0;
+#endif
 }
 
 int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
@@ -1914,8 +1922,8 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
   int i;
   qrdata = _qrlist->qrdata;
   nqrdata = _qrlist->nqrdata;
-  text = (char **)malloc(nqrdata * sizeof(*text));
-  mark = (unsigned char *)calloc(nqrdata, sizeof(*mark));
+  text = (char **)zbar_malloc(nqrdata * sizeof(*text));
+  mark = (unsigned char *)zbar_calloc(nqrdata, sizeof(*mark));
   ntext = 0;
 
   for (i = 0; i < nqrdata; i++)
@@ -2003,7 +2011,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
         }
 
       /*Step 2: Convert the entries.*/
-      sa_text = (char *)malloc((sa_ctext + 1) * sizeof(*sa_text));
+      sa_text = (char *)zbar_malloc((sa_ctext + 1) * sizeof(*sa_text));
       sa_ntext = 0;
       eci = -1;
       enc_list[0] = latin1_cd;
@@ -2142,7 +2150,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
         sa_text[sa_ntext++] = '\0';
         if (sa_ctext + 1 > sa_ntext)
         {
-          sa_text = (char *)realloc(sa_text, sa_ntext * sizeof(*sa_text));
+          sa_text = (char *)zbar_realloc(sa_text, sa_ntext * sizeof(*sa_text));
         }
 
         zbar_symbol_t *sa_sym;
@@ -2201,11 +2209,11 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
       else
       {
         _zbar_image_scanner_recycle_syms(iscn, syms);
-        free(sa_text);
+        zbar_free(sa_text);
       }
     }
 
-  free(mark);
+  zbar_free(mark);
   return ntext;
 }
 #endif

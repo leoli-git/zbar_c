@@ -34,8 +34,8 @@ void qr_wiener_filter(unsigned char *_img,int _width,int _height){
   int                 x;
   int                 y;
   if(_width<=0||_height<=0)return;
-  m_buf[0]=(unsigned *)malloc((_width+4<<3)*sizeof(*m_buf));
-  sn2_buf[0]=(unsigned *)malloc((_width+4<<3)*sizeof(*sn2_buf));
+  m_buf[0]=(unsigned *)zbar_malloc((_width+4<<3)*sizeof(*m_buf));
+  sn2_buf[0]=(unsigned *)zbar_malloc((_width+4<<3)*sizeof(*sn2_buf));
   for(y=1;y<8;y++){
     m_buf[y]=m_buf[y-1]+_width+4;
     sn2_buf[y]=sn2_buf[y-1]+_width+4;
@@ -99,8 +99,8 @@ void qr_wiener_filter(unsigned char *_img,int _width,int _height){
       }
     }
   }
-  free(sn2_buf[0]);
-  free(m_buf[0]);
+  zbar_free(sn2_buf[0]);
+  zbar_free(m_buf[0]);
 }
 
 #else
@@ -114,8 +114,8 @@ void qr_wiener_filter(unsigned char *_img,int _width,int _height){
   int                 x;
   int                 y;
   if(_width<=0||_height<=0)return;
-  m_buf[0]=(unsigned *)malloc((_width+2<<2)*sizeof(*m_buf));
-  sn2_buf[0]=(unsigned *)malloc((_width+2<<2)*sizeof(*sn2_buf));
+  m_buf[0]=(unsigned *)zbar_malloc((_width+2<<2)*sizeof(*m_buf));
+  sn2_buf[0]=(unsigned *)zbar_malloc((_width+2<<2)*sizeof(*sn2_buf));
   for(y=1;y<4;y++){
     m_buf[y]=m_buf[y-1]+_width+2;
     sn2_buf[y]=sn2_buf[y-1]+_width+2;
@@ -179,8 +179,8 @@ void qr_wiener_filter(unsigned char *_img,int _width,int _height){
       }
     }
   }
-  free(sn2_buf[0]);
-  free(m_buf[0]);
+  zbar_free(sn2_buf[0]);
+  zbar_free(m_buf[0]);
 }
 #endif
 
@@ -224,8 +224,8 @@ static void qr_sauvola_mask(unsigned char *_mask,unsigned *_b,int *_nb,
     for(logwindh=4;logwindh<8&&(1<<logwindh)<(_height+7>>3);logwindh++);
     windw=1<<logwindw;
     windh=1<<logwindh;
-    col_sums=(unsigned *)malloc(_width*sizeof(*col_sums));
-    col2_sums=(unsigned *)malloc(_width*sizeof(*col2_sums));
+    col_sums=(unsigned *)zbar_malloc(_width*sizeof(*col_sums));
+    col2_sums=(unsigned *)zbar_malloc(_width*sizeof(*col2_sums));
     /*Initialize sums down each column.*/
     for(x=0;x<_width;x++){
       g=_img[x];
@@ -310,8 +310,8 @@ static void qr_sauvola_mask(unsigned char *_mask,unsigned *_b,int *_nb,
         }
       }
     }
-    free(col2_sums);
-    free(col_sums);
+    zbar_free(col2_sums);
+    zbar_free(col_sums);
   }
   *_b=b;
   *_nb=nb;
@@ -348,8 +348,8 @@ static void qr_interpolate_background(unsigned char *_dst,
     for(logwindh=4;logwindh<8&&(1<<logwindh)<(_height+15>>4);logwindh++);
     windw=1<<logwindw;
     windh=1<<logwindh;
-    col_sums=(unsigned *)malloc(_width*sizeof(*col_sums));
-    ncol_sums=(unsigned *)malloc(_width*sizeof(*ncol_sums));
+    col_sums=(unsigned *)zbar_malloc(_width*sizeof(*col_sums));
+    ncol_sums=(unsigned *)zbar_malloc(_width*sizeof(*ncol_sums));
     /*Initialize sums down each column.*/
     for(x=0;x<_width;x++){
       if(!_mask[x]){
@@ -411,8 +411,8 @@ static void qr_interpolate_background(unsigned char *_dst,
         }
       }
     }
-    free(ncol_sums);
-    free(col_sums);
+    zbar_free(ncol_sums);
+    zbar_free(col_sums);
   }
   *_delta=delta;
   *_ndelta=ndelta;
@@ -478,7 +478,7 @@ void qr_binarize(unsigned char *_img,int _width,int _height){
     image_write_png(_img,_width,_height,fout);
     fclose(fout);
   }*/
-  mask=(unsigned char *)malloc(_width*_height*sizeof(*mask));
+  mask=(unsigned char *)zbar_malloc(_width*_height*sizeof(*mask));
   qr_sauvola_mask(mask,&b,&nb,_img,_width,_height);
   /*{
     FILE *fout;
@@ -486,7 +486,7 @@ void qr_binarize(unsigned char *_img,int _width,int _height){
     image_write_png(mask,_width,_height,fout);
     fclose(fout);
   }*/
-  background=(unsigned char *)malloc(_width*_height*sizeof(*mask));
+  background=(unsigned char *)zbar_malloc(_width*_height*sizeof(*mask));
   qr_interpolate_background(background,&delta,&ndelta,
    _img,mask,_width,_height,b,nb);
   /*{
@@ -496,8 +496,8 @@ void qr_binarize(unsigned char *_img,int _width,int _height){
     fclose(fout);
   }*/
   qr_gatos_mask(_img,_img,background,_width,_height,b,nb,delta,ndelta);
-  free(background);
-  free(mask);
+  zbar_free(background);
+  zbar_free(mask);
 }
 
 #else
@@ -533,7 +533,7 @@ unsigned char *qr_binarize(const unsigned char *_img,int _width,int _height){
     unsigned       g;
     int            x;
     int            y;
-    mask=(unsigned char *)malloc(_width*_height*sizeof(*mask));
+    mask=(unsigned char *)zbar_malloc(_width*_height*sizeof(*mask));
     /*We keep the window size fairly large to ensure it doesn't fit completely
        inside the center of a finder pattern of a version 1 QR code at full
        resolution.*/
@@ -541,7 +541,7 @@ unsigned char *qr_binarize(const unsigned char *_img,int _width,int _height){
     for(logwindh=4;logwindh<8&&(1<<logwindh)<(_height+7>>3);logwindh++);
     windw=1<<logwindw;
     windh=1<<logwindh;
-    col_sums=(unsigned *)malloc(_width*sizeof(*col_sums));
+    col_sums=(unsigned *)zbar_malloc(_width*sizeof(*col_sums));
     /*Initialize sums down each column.*/
     for(x=0;x<_width;x++){
       g=_img[x];
@@ -586,7 +586,7 @@ unsigned char *qr_binarize(const unsigned char *_img,int _width,int _height){
         }
       }
     }
-    free(col_sums);
+    zbar_free(col_sums);
   }
 #if defined(QR_DEBUG)
   {
@@ -616,7 +616,7 @@ int main(int _argc,char **_argv){
   }
   /*width=1182;
   height=1181;
-  img=(unsigned char *)malloc(width*height*sizeof(*img));
+  img=(unsigned char *)zbar_malloc(width*height*sizeof(*img));
   for(y=0;y<height;y++)for(x=0;x<width;x++){
     img[y*width+x]=(unsigned char)(-((x&1)^(y&1))&0xFF);
   }*/
@@ -633,7 +633,7 @@ int main(int _argc,char **_argv){
     image_write_png(img,width,height,fout);
     fclose(fout);
   }*/
-  free(img);
+  zbar_free(img);
   return EXIT_SUCCESS;
 }
 #endif

@@ -154,7 +154,7 @@ void _zbar_image_scanner_recycle_syms (zbar_image_scanner_t *iscn,
                     break;
             if(i == RECYCLE_BUCKETS) {
                 assert(sym->data);
-                free(sym->data);
+                zbar_free(sym->data);
                 sym->data = NULL;
                 sym->data_alloc = 0;
                 i = 0;
@@ -233,7 +233,7 @@ _zbar_image_scanner_alloc_sym (zbar_image_scanner_t *iscn,
         iscn->recycle[i].nsyms--;
     }
     else {
-        sym = calloc(1, sizeof(zbar_symbol_t));
+        sym = zbar_calloc(1, sizeof(zbar_symbol_t));
         STAT(sym_new);
     }
 
@@ -250,14 +250,14 @@ _zbar_image_scanner_alloc_sym (zbar_image_scanner_t *iscn,
         sym->datalen = datalen - 1;
         if(sym->data_alloc < datalen) {
             if(sym->data)
-                free(sym->data);
+                zbar_free(sym->data);
             sym->data_alloc = datalen;
-            sym->data = malloc(datalen);
+            sym->data = zbar_malloc(datalen);
         }
     }
     else {
         if(sym->data)
-            free(sym->data);
+            zbar_free(sym->data);
         sym->data = NULL;
         sym->datalen = sym->data_alloc = 0;
     }
@@ -468,7 +468,7 @@ static void symbol_handler (zbar_decoder_t *dcode)
 
 zbar_image_scanner_t *zbar_image_scanner_create ()
 {
-    zbar_image_scanner_t *iscn = calloc(1, sizeof(zbar_image_scanner_t));
+    zbar_image_scanner_t *iscn = zbar_calloc(1, sizeof(zbar_image_scanner_t));
     if(!iscn)
         return(NULL);
     iscn->dcode = zbar_decoder_create();
@@ -544,7 +544,7 @@ void zbar_image_scanner_destroy (zbar_image_scanner_t *iscn)
         iscn->qr = NULL;
     }
 #endif
-    free(iscn);
+    zbar_free(iscn);
 }
 
 zbar_image_data_handler_t*
@@ -713,10 +713,15 @@ int zbar_scan_image (zbar_image_scanner_t *iscn,
             // svg_path_start("vedge", 1. / 32, 0, y + 0.5);
             iscn->dx = iscn->du = 1;
             iscn->umin = cx0;
+            int count = 0;
             while(x < cx1) {
                 uint8_t d = *p;
                 movedelta(1, 0);
+                count++;
+                if (count < 38)
                 zbar_scan_y(scn, d);
+                else
+                	zbar_scan_y(scn, d);
             }
             ASSERT_POS;
             quiet_border(iscn);

@@ -176,7 +176,7 @@ static __inline int err_capture_str (const void *container,
     errinfo_t *err = (errinfo_t*)container;
     assert(err->magic == ERRINFO_MAGIC);
     if(err->arg_str)
-        free(err->arg_str);
+        zbar_free(err->arg_str);
     err->arg_str = strdup(arg);
     return(err_capture(container, sev, type, func, detail));
 }
@@ -218,11 +218,11 @@ static __inline void err_cleanup (errinfo_t *err)
 {
     assert(err->magic == ERRINFO_MAGIC);
     if(err->buf) {
-        free(err->buf);
+        zbar_free(err->buf);
         err->buf = NULL;
     }
     if(err->arg_str) {
-        free(err->arg_str);
+        zbar_free(err->arg_str);
         err->arg_str = NULL;
     }
 }

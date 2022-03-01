@@ -27,7 +27,7 @@
 
 zbar_image_t *zbar_image_create ()
 {
-    zbar_image_t *img = calloc(1, sizeof(zbar_image_t));
+    zbar_image_t *img = zbar_calloc(1, sizeof(zbar_image_t));
     _zbar_refcnt_init();
     _zbar_image_refcnt(img, 1);
     img->srcidx = -1;
@@ -40,7 +40,7 @@ void _zbar_image_free (zbar_image_t *img)
         zbar_symbol_set_ref(img->syms, -1);
         img->syms = NULL;
     }
-    free(img);
+    zbar_free(img);
 }
 
 void zbar_image_destroy (zbar_image_t *img)
@@ -155,7 +155,7 @@ __inline void zbar_image_free_data (zbar_image_t *img)
         newimg = zbar_image_create();
         memcpy(newimg, img, sizeof(zbar_image_t));
         /* recycle video image */
-        // newimg->cleanup(newimg);
+        newimg->cleanup(newimg);
         /* detach old image from src */
         img->cleanup = NULL;
         img->src = NULL;
@@ -172,7 +172,7 @@ __inline void zbar_image_free_data (zbar_image_t *img)
             cleanup(img);
         }
         else
-            free((void*)img->data);
+            zbar_free((void*)img->data);
     }
     img->data = NULL;
 }
@@ -205,7 +205,7 @@ zbar_image_t *zbar_image_copy (const zbar_image_t *src)
     dst->format = src->format;
     _zbar_image_copy_size(dst, src);
     dst->datalen = src->datalen;
-    dst->data = malloc(src->datalen);
+    dst->data = zbar_malloc(src->datalen);
     assert(dst->data);
     memcpy((void*)dst->data, src->data, src->datalen);
     dst->cleanup = zbar_image_free_data;
@@ -242,7 +242,7 @@ int zbar_image_write (const zbar_image_t *img,
                       const char *filebase)
 {
 	ptrdiff_t len = strlen(filebase) + 16;
-    char *filename = malloc(len);
+    char *filename = zbar_malloc(len);
     int n = 0, rc = 0;
     FILE *f;
     zimg_hdr_t hdr;
@@ -291,7 +291,7 @@ int zbar_image_write (const zbar_image_t *img,
     rc = fclose(f);
 
 error:
-    free(filename);
+    zbar_free(filename);
     return(rc);
 }
 
@@ -307,7 +307,7 @@ int zbar_image_write_png (const zbar_image_t *img,
     png_info *info = NULL;
     const uint8_t **rows = NULL;
 
-    rows = malloc(img->height * sizeof(*rows));
+    rows = zbar_malloc(img->height * sizeof(*rows));
     if(!rows)
         goto done;
 
@@ -347,7 +347,7 @@ done:
     if(png)
         png_destroy_write_struct(&png, &info);
     if(rows)
-        free(rows);
+        zbar_free(rows);
     if(file)
         fclose(file);
     return(rc);

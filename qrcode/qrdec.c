@@ -84,7 +84,7 @@ static void qr_reader_init (qr_reader *reader)
 /*Allocates a client reader handle.*/
 qr_reader *_zbar_qr_create (void)
 {
-    qr_reader *reader = (qr_reader*)calloc(1, sizeof(*reader));
+    qr_reader *reader = (qr_reader*)zbar_calloc(1, sizeof(*reader));
     qr_reader_init(reader);
     return(reader);
 }
@@ -96,10 +96,10 @@ void _zbar_qr_destroy (qr_reader *reader)
             reader->finder_lines[0].clines,
             reader->finder_lines[1].clines);
     if(reader->finder_lines[0].lines)
-        free(reader->finder_lines[0].lines);
+        zbar_free(reader->finder_lines[0].lines);
     if(reader->finder_lines[1].lines)
-        free(reader->finder_lines[1].lines);
-    free(reader);
+        zbar_free(reader->finder_lines[1].lines);
+    zbar_free(reader);
 }
 
 /* reset finder state between scans */
@@ -180,7 +180,7 @@ static int qr_finder_cluster_lines(qr_finder_cluster *_clusters,
   int              nclusters;
   int              i;
   /*TODO: Kalman filters!*/
-  mark=(unsigned char *)calloc(_nlines,sizeof(*mark));
+  mark=(unsigned char *)zbar_calloc(_nlines,sizeof(*mark));
   neighbors=_neighbors;
   nclusters=0;
   for(i=0;i<_nlines-1;i++)if(!mark[i]){
@@ -230,7 +230,7 @@ static int qr_finder_cluster_lines(qr_finder_cluster *_clusters,
       nclusters++;
     }
   }
-  free(mark);
+  zbar_free(mark);
   return nclusters;
 }
 
@@ -313,10 +313,10 @@ static int qr_finder_find_crossings(qr_finder_center *_centers,
   int                 ncenters;
   int                 i;
   int                 j;
-  hneighbors=(qr_finder_cluster **)malloc(_nhclusters*sizeof(*hneighbors));
-  vneighbors=(qr_finder_cluster **)malloc(_nvclusters*sizeof(*vneighbors));
-  hmark=(unsigned char *)calloc(_nhclusters,sizeof(*hmark));
-  vmark=(unsigned char *)calloc(_nvclusters,sizeof(*vmark));
+  hneighbors=(qr_finder_cluster **)zbar_malloc(_nhclusters*sizeof(*hneighbors));
+  vneighbors=(qr_finder_cluster **)zbar_malloc(_nvclusters*sizeof(*vneighbors));
+  hmark=(unsigned char *)zbar_calloc(_nhclusters,sizeof(*hmark));
+  vmark=(unsigned char *)zbar_calloc(_nvclusters,sizeof(*vmark));
   ncenters=0;
   /*TODO: This may need some re-working.
     We should be finding groups of clusters such that _all_ horizontal lines in
@@ -376,10 +376,10 @@ static int qr_finder_find_crossings(qr_finder_center *_centers,
       _edge_pts+=nedge_pts;
     }
   }
-  free(vmark);
-  free(hmark);
-  free(vneighbors);
-  free(hneighbors);
+  zbar_free(vmark);
+  zbar_free(hmark);
+  zbar_free(vneighbors);
+  zbar_free(hneighbors);
   /*Sort the centers by decreasing numbers of edge points.*/
   qsort(_centers,ncenters,sizeof(*_centers),qr_finder_center_cmp);
   return ncenters;
@@ -420,18 +420,18 @@ static int qr_finder_centers_locate(qr_finder_center **_centers,
   int                 ncenters;
 
   /*Cluster the detected lines.*/
-  hneighbors=(qr_finder_line **)malloc(nhlines*sizeof(*hneighbors));
+  hneighbors=(qr_finder_line **)zbar_malloc(nhlines*sizeof(*hneighbors));
   /*We require more than one line per cluster, so there are at most nhlines/2.*/
-  hclusters=(qr_finder_cluster *)malloc((nhlines>>1)*sizeof(*hclusters));
+  hclusters=(qr_finder_cluster *)zbar_malloc((nhlines>>1)*sizeof(*hclusters));
   nhclusters=qr_finder_cluster_lines(hclusters,hneighbors,hlines,nhlines,0);
   /*We need vertical lines to be sorted by X coordinate, with ties broken by Y
      coordinate, for clustering purposes.
     We scan the image in the opposite order for cache efficiency, so sort the
      lines we found here.*/
   qsort(vlines,nvlines,sizeof(*vlines),qr_finder_vline_cmp);
-  vneighbors=(qr_finder_line **)malloc(nvlines*sizeof(*vneighbors));
+  vneighbors=(qr_finder_line **)zbar_malloc(nvlines*sizeof(*vneighbors));
   /*We require more than one line per cluster, so there are at most nvlines/2.*/
-  vclusters=(qr_finder_cluster *)malloc((nvlines>>1)*sizeof(*vclusters));
+  vclusters=(qr_finder_cluster *)zbar_malloc((nvlines>>1)*sizeof(*vclusters));
   nvclusters=qr_finder_cluster_lines(vclusters,vneighbors,vlines,nvlines,1);
   /*Find line crossings among the clusters.*/
   if(nhclusters>=3&&nvclusters>=3){
@@ -443,8 +443,8 @@ static int qr_finder_centers_locate(qr_finder_center **_centers,
     for(i=0;i<nhclusters;i++)nedge_pts+=hclusters[i].nlines;
     for(i=0;i<nvclusters;i++)nedge_pts+=vclusters[i].nlines;
     nedge_pts<<=1;
-    edge_pts=(qr_finder_edge_pt *)malloc(nedge_pts*sizeof(*edge_pts));
-    centers=(qr_finder_center *)malloc(
+    edge_pts=(qr_finder_edge_pt *)zbar_malloc(nedge_pts*sizeof(*edge_pts));
+    centers=(qr_finder_center *)zbar_malloc(
      QR_MINI(nhclusters,nvclusters)*sizeof(*centers));
     ncenters=qr_finder_find_crossings(centers,edge_pts,
      hclusters,nhclusters,vclusters,nvclusters);
@@ -452,10 +452,10 @@ static int qr_finder_centers_locate(qr_finder_center **_centers,
     *_edge_pts=edge_pts;
   }
   else ncenters=0;
-  free(vclusters);
-  free(vneighbors);
-  free(hclusters);
-  free(hneighbors);
+  zbar_free(vclusters);
+  zbar_free(vneighbors);
+  zbar_free(hclusters);
+  zbar_free(hneighbors);
   return ncenters;
 }
 
@@ -1137,7 +1137,7 @@ static int qr_line_fit_finder_edge(qr_line _l,
   /*We could write a custom version of qr_line_fit_points that accesses
      edge_pts directly, but this saves on code size and doesn't measurably slow
      things down.*/
-  pts=(qr_point *)malloc(npts*sizeof(*pts));
+  pts=(qr_point *)zbar_malloc(npts*sizeof(*pts));
   edge_pts=_f->edge_pts[_e];
   for(i=0;i<npts;i++){
     pts[i][0]=edge_pts[i].pos[0];
@@ -1147,7 +1147,7 @@ static int qr_line_fit_finder_edge(qr_line _l,
   /*Make sure the center of the finder pattern lies in the positive halfspace
      of the line.*/
   qr_line_orient(_l,_f->c->pos[0],_f->c->pos[1]);
-  free(pts);
+  zbar_free(pts);
   return 0;
 }
 
@@ -1171,7 +1171,7 @@ static void qr_line_fit_finder_pair(qr_line _l,const qr_aff *_aff,
      edge_pts directly, but this saves on code size and doesn't measurably slow
      things down.*/
   npts=QR_MAXI(n0,1)+QR_MAXI(n1,1);
-  pts=(qr_point *)malloc(npts*sizeof(*pts));
+  pts=(qr_point *)zbar_malloc(npts*sizeof(*pts));
   if(n0>0){
     edge_pts=_f0->edge_pts[_e];
     for(i=0;i<n0;i++){
@@ -1203,7 +1203,7 @@ static void qr_line_fit_finder_pair(qr_line _l,const qr_aff *_aff,
   qr_line_fit_points(_l,pts,npts,_aff->res);
   /*Make sure at least one finder center lies in the positive halfspace.*/
   qr_line_orient(_l,_f0->c->pos[0],_f0->c->pos[1]);
-  free(pts);
+  zbar_free(pts);
 }
 
 static int qr_finder_quick_crossing_check(const unsigned char *_img,
@@ -1349,7 +1349,7 @@ static void qr_finder_dump_aff_undistorted(qr_finder *_ul,qr_finder *_ur,
   lpsz=qr_ilog(_ur->size[0]+_ur->size[1]+_dl->size[0]+_dl->size[1])-6;
   pixel_size=1<<lpsz;
   dim=(1<<_aff->res-lpsz)+128;
-  gimg=(unsigned char *)malloc(dim*dim*sizeof(*gimg));
+  gimg=(unsigned char *)zbar_malloc(dim*dim*sizeof(*gimg));
   for(i=0;i<dim;i++)for(j=0;j<dim;j++){
     qr_point p;
     qr_aff_project(p,_aff,(j-64)<<lpsz,(i-64)<<lpsz);
@@ -1400,7 +1400,7 @@ static void qr_finder_dump_aff_undistorted(qr_finder *_ul,qr_finder *_ur,
   fout=fopen("undistorted_aff.png","wb");
   image_write_png(gimg,dim,dim,fout);
   fclose(fout);
-  free(gimg);
+  zbar_free(gimg);
 }
 
 static void qr_finder_dump_hom_undistorted(qr_finder *_ul,qr_finder *_ur,
@@ -1419,7 +1419,7 @@ static void qr_finder_dump_hom_undistorted(qr_finder *_ul,qr_finder *_ur,
   lpsz=qr_ilog(_ur->size[0]+_ur->size[1]+_dl->size[0]+_dl->size[1])-6;
   pixel_size=1<<lpsz;
   dim=(1<<_hom->res-lpsz)+256;
-  gimg=(unsigned char *)malloc(dim*dim*sizeof(*gimg));
+  gimg=(unsigned char *)zbar_malloc(dim*dim*sizeof(*gimg));
   for(i=0;i<dim;i++)for(j=0;j<dim;j++){
     qr_point p;
     qr_hom_project(p,_hom,(j-128)<<lpsz,(i-128)<<lpsz);
@@ -1470,7 +1470,7 @@ static void qr_finder_dump_hom_undistorted(qr_finder *_ul,qr_finder *_ur,
   fout=fopen("undistorted_hom.png","wb");
   image_write_png(gimg,dim,dim,fout);
   fclose(fout);
-  free(gimg);
+  zbar_free(gimg);
 }
 #endif
 
@@ -2026,13 +2026,13 @@ static int qr_hom_fit(qr_hom *_hom,qr_finder *_ul,qr_finder *_ur,
   /*Set up the initial point lists.*/
   nr=rlastfit=_ur->ninliers[1];
   cr=nr+(_dl->o[1]-rv+drv-1)/drv;
-  r=(qr_point *)malloc(cr*sizeof(*r));
+  r=(qr_point *)zbar_malloc(cr*sizeof(*r));
   for(i=0;i<_ur->ninliers[1];i++){
     memcpy(r[i],_ur->edge_pts[1][i].pos,sizeof(r[i]));
   }
   nb=blastfit=_dl->ninliers[3];
   cb=nb+(_ur->o[0]-bu+dbu-1)/dbu;
-  b=(qr_point *)malloc(cb*sizeof(*b));
+  b=(qr_point *)zbar_malloc(cb*sizeof(*b));
   for(i=0;i<_dl->ninliers[3];i++){
     memcpy(b[i],_dl->edge_pts[3][i].pos,sizeof(b[i]));
   }
@@ -2076,7 +2076,7 @@ static int qr_hom_fit(qr_hom *_hom,qr_finder *_ul,qr_finder *_ur,
       y1=ry-dryj>>_aff->res+QR_FINDER_SUBPREC;
       if(nr>=cr){
         cr=cr<<1|1;
-        r=(qr_point *)realloc(r,cr*sizeof(*r));
+        r=(qr_point *)zbar_realloc(r,cr*sizeof(*r));
       }
       ret=qr_finder_quick_crossing_check(_img,_width,_height,x0,y0,x1,y1,1);
       if(!ret){
@@ -2120,7 +2120,7 @@ static int qr_hom_fit(qr_hom *_hom,qr_finder *_ul,qr_finder *_ur,
       y1=by-dbyj>>_aff->res+QR_FINDER_SUBPREC;
       if(nb>=cb){
         cb=cb<<1|1;
-        b=(qr_point *)realloc(b,cb*sizeof(*b));
+        b=(qr_point *)zbar_realloc(b,cb*sizeof(*b));
       }
       ret=qr_finder_quick_crossing_check(_img,_width,_height,x0,y0,x1,y1,1);
       if(!ret){
@@ -2174,7 +2174,7 @@ static int qr_hom_fit(qr_hom *_hom,qr_finder *_ul,qr_finder *_ur,
     l[1][1]=-_aff->fwd[0][1]+round>>shift;
     l[1][2]=-(l[1][0]*p[0]+l[1][1]*p[1]);
   }
-  free(r);
+  zbar_free(r);
   if(nb>1)qr_line_fit_points(l[3],b,nb,_aff->res);
   else{
     qr_aff_project(p,_aff,_dl->o[0],_dl->o[1]+3*_dl->size[1]);
@@ -2186,7 +2186,7 @@ static int qr_hom_fit(qr_hom *_hom,qr_finder *_ul,qr_finder *_ur,
     l[3][1]=-_aff->fwd[0][0]+round>>shift;
     l[3][2]=-(l[1][0]*p[0]+l[1][1]*p[1]);
   }
-  free(b);
+  zbar_free(b);
   for(i=0;i<4;i++){
     if(qr_line_isect(_p[i],l[i&1],l[2+(i>>1)])<0)return -1;
     /*It's plausible for points to be somewhat outside the image, but too far
@@ -2612,11 +2612,11 @@ static void qr_sampling_grid_init(qr_sampling_grid *_grid,int _version,
    _p[0][0],_p[0][1],_p[1][0],_p[1][1],_p[2][0],_p[2][1],_p[3][0],_p[3][1]);
   /*Allocate the array of cells.*/
   _grid->ncells=nalign-1;
-  _grid->cells[0]=(qr_hom_cell *)malloc(
+  _grid->cells[0]=(qr_hom_cell *)zbar_malloc(
    (nalign-1)*(nalign-1)*sizeof(*_grid->cells[0]));
   for(i=1;i<_grid->ncells;i++)_grid->cells[i]=_grid->cells[i-1]+_grid->ncells;
   /*Initialize the function pattern mask.*/
-  _grid->fpmask=(unsigned *)calloc(dim,
+  _grid->fpmask=(unsigned *)zbar_calloc(dim,
    (dim+QR_INT_BITS-1>>QR_INT_LOGBITS)*sizeof(*_grid->fpmask));
   /*Mask out the finder patterns (and separators and format info bits).*/
   qr_sampling_grid_fp_mask_rect(_grid,dim,0,0,9,9);
@@ -2638,8 +2638,8 @@ static void qr_sampling_grid_init(qr_sampling_grid *_grid,int _version,
     qr_point *p;
     int       j;
     int       k;
-    q=(qr_point *)malloc(nalign*nalign*sizeof(*q));
-    p=(qr_point *)malloc(nalign*nalign*sizeof(*p));
+    q=(qr_point *)zbar_malloc(nalign*nalign*sizeof(*q));
+    p=(qr_point *)zbar_malloc(nalign*nalign*sizeof(*p));
     /*Initialize the alignment pattern position list.*/
     align_pos[0]=6;
     align_pos[nalign-1]=dim-7;
@@ -2727,8 +2727,8 @@ static void qr_sampling_grid_init(qr_sampling_grid *_grid,int _version,
       }
     }
     // qr_svg_points("align", p, nalign * nalign);
-    free(q);
-    free(p);
+    zbar_free(q);
+    zbar_free(p);
   }
   /*Set the limits over which each cell is used.*/
   memcpy(_grid->cell_limits,align_pos+1,
@@ -2759,8 +2759,8 @@ static void qr_sampling_grid_init(qr_sampling_grid *_grid,int _version,
 }
 
 static void qr_sampling_grid_clear(qr_sampling_grid *_grid){
-  free(_grid->fpmask);
-  free(_grid->cells[0]);
+  zbar_free(_grid->fpmask);
+  zbar_free(_grid->cells[0]);
 }
 
 
@@ -2781,7 +2781,7 @@ static void qr_sampling_grid_dump(qr_sampling_grid *_grid,int _version,
   int            r;
   int            s;
   dim=17+(_version<<2)+8<<QR_ALIGN_SUBPREC;
-  gimg=(unsigned char *)malloc(dim*dim*sizeof(*gimg));
+  gimg=(unsigned char *)zbar_malloc(dim*dim*sizeof(*gimg));
   for(i=0;i<dim;i++)for(j=0;j<dim;j++){
     qr_hom_cell *cell;
     if(i>=(4<<QR_ALIGN_SUBPREC)&&i<=dim-(5<<QR_ALIGN_SUBPREC)&&
@@ -2824,7 +2824,7 @@ static void qr_sampling_grid_dump(qr_sampling_grid *_grid,int _version,
   fout=fopen("grid.png","wb");
   image_write_png(gimg,dim,dim,fout);
   fclose(fout);
-  free(gimg);
+  zbar_free(gimg);
 }
 #endif
 
@@ -3209,7 +3209,7 @@ static int qr_code_data_parse(qr_code_data *_qrdata,int _version,
     if(!mode)break;
     if(_qrdata->nentries>=centries){
       centries=centries<<1|1;
-      _qrdata->entries=(qr_code_data_entry *)realloc(_qrdata->entries,
+      _qrdata->entries=(qr_code_data_entry *)zbar_realloc(_qrdata->entries,
        centries*sizeof(*_qrdata->entries));
     }
     entry=_qrdata->entries+_qrdata->nentries++;
@@ -3239,7 +3239,7 @@ static int qr_code_data_parse(qr_code_data *_qrdata,int _version,
         count=len/3;
         rem=len%3;
         if(qr_pack_buf_avail(&qpb)<10*count+7*(rem>>1&1)+4*(rem&1))return -1;
-        entry->payload.data.buf=buf=(unsigned char *)malloc(len*sizeof(*buf));
+        entry->payload.data.buf=buf=(unsigned char *)zbar_malloc(len*sizeof(*buf));
         entry->payload.data.len=len;
         /*Read groups of 3 digits encoded in 10 bits.*/
         while(count-->0){
@@ -3290,7 +3290,7 @@ static int qr_code_data_parse(qr_code_data *_qrdata,int _version,
         count=len>>1;
         rem=len&1;
         if(qr_pack_buf_avail(&qpb)<11*count+6*rem)return -1;
-        entry->payload.data.buf=buf=(unsigned char *)malloc(len*sizeof(*buf));
+        entry->payload.data.buf=buf=(unsigned char *)zbar_malloc(len*sizeof(*buf));
         entry->payload.data.len=len;
         /*Read groups of two characters encoded in 11 bits.*/
         while(count-->0){
@@ -3341,7 +3341,7 @@ static int qr_code_data_parse(qr_code_data *_qrdata,int _version,
         /*Check to see if there are enough bits left now, so we don't have to
            in the decode loop.*/
         if(qr_pack_buf_avail(&qpb)<len<<3)return -1;
-        entry->payload.data.buf=buf=(unsigned char *)malloc(len*sizeof(*buf));
+        entry->payload.data.buf=buf=(unsigned char *)zbar_malloc(len*sizeof(*buf));
         entry->payload.data.len=len;
         while(len-->0){
           c=qr_pack_buf_read(&qpb,8);
@@ -3389,7 +3389,7 @@ static int qr_code_data_parse(qr_code_data *_qrdata,int _version,
         /*Check to see if there are enough bits left now, so we don't have to
            in the decode loop.*/
         if(qr_pack_buf_avail(&qpb)<13*len)return -1;
-        entry->payload.data.buf=buf=(unsigned char *)malloc(2*len*sizeof(*buf));
+        entry->payload.data.buf=buf=(unsigned char *)zbar_malloc(2*len*sizeof(*buf));
         entry->payload.data.len=2*len;
         /*Decode 2-byte SJIS characters encoded in 13 bits.*/
         while(len-->0){
@@ -3433,7 +3433,7 @@ static int qr_code_data_parse(qr_code_data *_qrdata,int _version,
      because we can just do it here instead.*/
   _qrdata->self_parity=((self_parity>>8)^self_parity)&0xFF;
   /*Success.*/
-  _qrdata->entries=(qr_code_data_entry *)realloc(_qrdata->entries,
+  _qrdata->entries=(qr_code_data_entry *)zbar_realloc(_qrdata->entries,
    _qrdata->nentries*sizeof(*_qrdata->entries));
   return 0;
 }
@@ -3442,10 +3442,10 @@ static void qr_code_data_clear(qr_code_data *_qrdata){
   int i;
   for(i=0;i<_qrdata->nentries;i++){
     if(QR_MODE_HAS_DATA(_qrdata->entries[i].mode)){
-      free(_qrdata->entries[i].payload.data.buf);
+      zbar_free(_qrdata->entries[i].payload.data.buf);
     }
   }
-  free(_qrdata->entries);
+  zbar_free(_qrdata->entries);
 }
 
 
@@ -3457,7 +3457,7 @@ void qr_code_data_list_init(qr_code_data_list *_qrlist){
 void qr_code_data_list_clear(qr_code_data_list *_qrlist){
   int i;
   for(i=0;i<_qrlist->nqrdata;i++)qr_code_data_clear(_qrlist->qrdata+i);
-  free(_qrlist->qrdata);
+  zbar_free(_qrlist->qrdata);
   qr_code_data_list_init(_qrlist);
 }
 
@@ -3465,7 +3465,7 @@ static void qr_code_data_list_add(qr_code_data_list *_qrlist,
  qr_code_data *_qrdata){
   if(_qrlist->nqrdata>=_qrlist->cqrdata){
     _qrlist->cqrdata=_qrlist->cqrdata<<1|1;
-    _qrlist->qrdata=(qr_code_data *)realloc(_qrlist->qrdata,
+    _qrlist->qrdata=(qr_code_data *)zbar_realloc(_qrlist->qrdata,
      _qrlist->cqrdata*sizeof(*_qrlist->qrdata));
   }
   memcpy(_qrlist->qrdata+_qrlist->nqrdata++,_qrdata,sizeof(*_qrdata));
@@ -3581,7 +3581,7 @@ static int qr_code_decode(qr_code_data *_qrdata,const rs_gf256 *_gf,
   qr_sampling_grid_dump(&grid,_version,_img,_width,_height);
 #endif
   dim=17+(_version<<2);
-  data_bits=(unsigned *)malloc(
+  data_bits=(unsigned *)zbar_malloc(
    dim*(dim+QR_INT_BITS-1>>QR_INT_LOGBITS)*sizeof(*data_bits));
   qr_sampling_grid_sample(&grid,data_bits,dim,_fmt_info,_img,_width,_height);
   /*Group those bits into Reed-Solomon codewords.*/
@@ -3591,15 +3591,15 @@ static int qr_code_decode(qr_code_data *_qrdata,const rs_gf256 *_gf,
   ncodewords=qr_code_ncodewords(_version);
   block_sz=ncodewords/nblocks;
   nshort_blocks=nblocks-(ncodewords%nblocks);
-  blocks=(unsigned char **)malloc(nblocks*sizeof(*blocks));
-  block_data=(unsigned char *)malloc(ncodewords*sizeof(*block_data));
+  blocks=(unsigned char **)zbar_malloc(nblocks*sizeof(*blocks));
+  block_data=(unsigned char *)zbar_malloc(ncodewords*sizeof(*block_data));
   blocks[0]=block_data;
   for(i=1;i<nblocks;i++)blocks[i]=blocks[i-1]+block_sz+(i>nshort_blocks);
   qr_samples_unpack(blocks,nblocks,block_sz-npar,nshort_blocks,
    data_bits,grid.fpmask,dim);
   qr_sampling_grid_clear(&grid);
-  free(blocks);
-  free(data_bits);
+  zbar_free(blocks);
+  zbar_free(data_bits);
   /*Perform the error correction.*/
   ndata=0;
   ncodewords=0;
@@ -3636,7 +3636,7 @@ static int qr_code_decode(qr_code_data *_qrdata,const rs_gf256 *_gf,
     _qrdata->version=_version;
     _qrdata->ecc_level=ecc_level;
   }
-  free(block_data);
+  zbar_free(block_data);
   return ret;
 }
 
@@ -3892,7 +3892,7 @@ void qr_reader_match_centers(qr_reader *_reader,qr_code_data_list *_qrlist,
   int            i;
   int            j;
   int            k;
-  mark=(unsigned char *)calloc(_ncenters,sizeof(*mark));
+  mark=(unsigned char *)zbar_calloc(_ncenters,sizeof(*mark));
   nfailures_max=QR_MAXI(8192,_width*_height>>9);
   nfailures=0;
   for(i=0;i<_ncenters;i++){
@@ -3937,13 +3937,13 @@ void qr_reader_match_centers(qr_reader *_reader,qr_code_data_list *_qrlist,
               Copy the relevant centers to a new array and do a search confined
                to that subset.*/
             qr_finder_center *inside;
-            inside=(qr_finder_center *)malloc(ninside*sizeof(*inside));
+            inside=(qr_finder_center *)zbar_malloc(ninside*sizeof(*inside));
             for(l=ninside=0;l<_ncenters;l++){
               if(mark[l]==2)*&inside[ninside++]=*&_centers[l];
             }
             qr_reader_match_centers(_reader,_qrlist,inside,ninside,
              _img,_width,_height);
-            free(inside);
+            zbar_free(inside);
           }
           /*Mark _all_ such centers used: codes cannot partially overlap.*/
           for(l=0;l<_ncenters;l++)if(mark[l]==2)mark[l]=1;
@@ -3958,7 +3958,7 @@ void qr_reader_match_centers(qr_reader *_reader,qr_code_data_list *_qrlist,
       }
     }
   }
-  free(mark);
+  zbar_free(mark);
 }
 
 int _zbar_qr_found_line (qr_reader *reader,
@@ -3970,7 +3970,7 @@ int _zbar_qr_found_line (qr_reader *reader,
 
     if(lines->nlines >= lines->clines) {
         lines->clines *= 2;
-        lines->lines = realloc(lines->lines,
+        lines->lines = zbar_realloc(lines->lines,
                                ++lines->clines * sizeof(*lines->lines));
     }
 
@@ -4033,13 +4033,13 @@ int _zbar_qr_decode (qr_reader *reader,
             nqrdata = qr_code_data_list_extract_text(&qrlist, iscn, img);
 
         qr_code_data_list_clear(&qrlist);
-        free(bin);
+        zbar_free(bin);
     }
     // svg_group_end();
 
     if(centers)
-        free(centers);
+        zbar_free(centers);
     if(edge_pts)
-        free(edge_pts);
+        zbar_free(edge_pts);
     return(nqrdata);
 }

@@ -282,7 +282,7 @@ static __inline char size_buf (zbar_decoder_t *dcode,
         if(len > BUFFER_MAX)
             len = BUFFER_MAX;
     }
-    buf = realloc(dcode->buf, len);
+    buf = zbar_realloc(dcode->buf, len);
     if(!buf)
         return(1);
     dcode->buf = buf;
