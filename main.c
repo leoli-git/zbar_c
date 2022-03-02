@@ -6,10 +6,10 @@
 #include "zbar.h"
 #include "image.h"
 
-#define SelfTest
+// #define SelfTest
 #define BITMAP
 #ifdef BITMAP
-#define DUMP_FILE
+// #define DUMP_FILE
 #endif
 
 #ifdef SelfTest
@@ -295,6 +295,11 @@ int main()
     int height = 216;
     const unsigned char *raw = (unsigned char *)malloc(width * height);
 #endif
+
+    unsigned major, minor;
+    zbar_version(&major, &minor);
+    printf("zbar version: %d.%d\r\n", major, minor);
+
     zbar_image_t *image = zbar_image_create();
     zbar_image_set_size(image, width, height);
     unsigned long format = zbar_fourcc_parse("Y800");
