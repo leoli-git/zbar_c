@@ -8,9 +8,13 @@
 #ifndef ZBAR_ALLOC_H_
 #define ZBAR_ALLOC_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <stdlib.h>
 #include <string.h>
 
+#define CHECK_MIN_SIZE 0 // 0: off, 1: open
 #define ZBAR_ALLOC_ARRAY_SIZE (114 * 1024)
 
 void *zbar_malloc_t(size_t __size);

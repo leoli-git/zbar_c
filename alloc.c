@@ -38,6 +38,9 @@ void *zbar_malloc_t(size_t __size)
     nunits = ((__size + sizeof(zbar_alloc_t) - 1) / sizeof(zbar_alloc_t)) + 1;
 
     gAllocCount += nunits;
+#if (CHECK_MIN_SIZE == 1)
+    printf("zbar_malloc_t gAllocCount: %d KB\r\n", (gAllocCount * sizeof(zbar_alloc_t)) / 1024);
+#endif
 
     if ((prevp = gFreePtr) == NULL)
     {
@@ -112,6 +115,10 @@ void zbar_free_t(void *__p)
     bp = (zbar_alloc_t *)__p - 1; /* point to block header */
 
     gAllocCount -= bp->s.size;
+#if (CHECK_MIN_SIZE == 1)
+    printf("zbar_free_t gAllocCount: %d KB\r\n", (gAllocCount * sizeof(zbar_alloc_t)) / 1024);
+#endif
+
     for (p = gFreePtr; !((bp > p) && (bp < p->s.ptr)); p = p->s.ptr)
     {
         if ((p >= p->s.ptr) && ((bp > p) || (bp < p->s.ptr)))
