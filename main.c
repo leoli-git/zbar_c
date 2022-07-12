@@ -6,6 +6,8 @@
 #include "zbar.h"
 #include "image.h"
 
+#define CommandLine
+
 // #define SelfTest
 #define BITMAP
 #ifdef BITMAP
@@ -242,7 +244,11 @@ void cleanup(zbar_image_t *img)
     // free(img);
 }
 
+#ifdef CommandLine
+int main(int argc, char **argv)
+#else
 int main()
+#endif
 {
 #ifdef BITMAP
     char *fileName = malloc(MAX_PATH * sizeof(char));
@@ -250,8 +256,20 @@ int main()
     fileName = GetModuleFolder();
     fileName = strcat(fileName, SampleQR);
 #else
+
+#ifdef CommandLine
+    if (argc > 1)
+        fileName = argv[1];
+    else
+    {
+        printf("No arguments\n");
+        return 0;
+    }
+#else
     printf("Please Input QR Code Bmp File Path: ");
     scanf("%s", fileName);
+#endif
+
     DeleteChar(fileName, '\"');
 #endif
     printf("FileName: %s\r\n", fileName);
@@ -335,7 +353,6 @@ int main()
     zbar_image_scanner_destroy(scanner);
 
     printf("time spent: %d ms\r\n", t2 - t1);
-    printf("press ENTER to EXIT\r\n");
 
 #if defined(SelfTest)
     if (ret > 0 /* && strcmp(data, "134583789727716556") */)
@@ -359,7 +376,10 @@ int main()
         printf("SelfTest: FAIL\r\n");
 #endif
 
+#ifndef CommandLine
+    printf("press ENTER to EXIT\r\n");
     fflush(stdin);   // 清除輸入緩衝區
     (void)getchar(); // wait for exit
+#endif
     return 0;
 }
