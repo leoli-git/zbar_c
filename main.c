@@ -286,6 +286,8 @@ int main()
     ret = zbar_image_scanner_set_config(scanner, ZBAR_NONE, ZBAR_CFG_ENABLE, 0);
     // printf("ret: %d\r\n", ret);
     ret = zbar_image_scanner_set_config(scanner, ZBAR_QRCODE, ZBAR_CFG_ENABLE, 1);
+    ret = zbar_image_scanner_set_config(scanner, ZBAR_EAN13, ZBAR_CFG_ENABLE, 1);
+    ret = zbar_image_scanner_set_config(scanner, ZBAR_CODE128, ZBAR_CFG_ENABLE, 1);
     // printf("ret: %d\r\n", ret);
 
 #ifdef BITMAP
